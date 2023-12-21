@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph</title>
+    <style>
+        *
+        {
+            margin: 0;
+            padding: 0;
+        }
+        body
+        {
+            background-color: #000000BB;
+            width: 100vw;
+            height: 100vh;
+        }
+        .container
+        {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            position: relative;
+        }
+        .content
+        {
+            position: relative;
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+        }
+        .area
+        {
+            width: 100%;
+            height: 40%;
+            position: relative;
+            background-color: white;
+        }
+        .button
+        {
+            margin: 10px;
+            background-color: rgb(0, 255, 0);
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 20px;
+        }
+        .buttons
+        {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
+        .graph-borad
+        {
+            height: 100%;
+            width: 100%;
+            background-color: transparent;
+            position: absolute;
+            overflow: hidden;
+        }
+        .text{
+            display: flex;
+            position: absolute;
+            justify-content: center;
+            align-items: center;
+            width: 30px;
+            height: 30px;
+            z-index: 1;
+            color: red;
+            font-size: medium;
+            font-weight: bold;
+        }
+        .node
+        {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            background-color: white;
+            border: 2px dashed black;
+            transform: translate(-50%, -50%);
+            transition: 0.5s;
+            cursor: pointer;
+        }
+        .node:hover
+        {
+            background-color: aqua;
+            border-style: solid;
+        }
+        #draw, #slove-draw
+        {
+            z-index: -1;
+            width: 100%;
+            height: 100%;
+        }
+        .line
+        {
+            stroke: black;
+            stroke-width: 2;
+        }
+        .focused
+        {
+            box-shadow: 0 0 10px 5px orange;
+        }
+        .head{
+            font-size: larger;
+            font-weight: bold;
+            padding: 10px;
+            background-color: transparent;
+            position: absolute;
+            z-index: 1;
+        }
+        .head:hover .instructions{
+            display: block;
+        }
+        .head:hover .circle-alp{
+            color: black;
+            border-color: black;
+        }
+        .instructions
+        {
+            border: 2px solid black;
+            width: fit-content;
+            font-weight: lighter;
+            padding: 10px;
+            padding-left: 30px;
+            border-radius: 10px;
+            position: relative;
+            left: 30px;
+            top: 10px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.804);
+            display: none;
+        }
+        .note
+        {
+            display: none;
+            align-items: center;
+            color: white;
+            font-size: larger;
+        }
+        .circle-alp
+        {
+            display: inline;
+            position: relative;
+            bottom: 2px;
+            border: 2px solid rgba(0, 0, 0, 0.7);
+            border-radius: 50%;
+            font-size: 10px;
+            width: fit-content;
+            height: fit-content;
+            padding: 0px 5px;
+            color: rgba(0, 0, 0, 0.7);
+            transform: scaleX(0.1), scaleY(0.5);
+        }
+        .tutorial
+        {
+            display: inline;
+            position: absolute;
+            width: fit-content;
+            top: 40px;
+            left: 45px;
+            background-color: rgba(0, 0, 0);
+            font-weight: 100;
+            padding: 0px 10px 10px 10px;
+            border-radius: 5px;
+            color: white;
+            opacity: 0;
+            animation: tutor 3s ease 1s 1;
+        }
+        .tutorial::before
+        {
+            content: '';
+            background-color: rgba(0, 0, 0);
+            display: flex;
+            width: 20px;
+            height: 20px;
+            position: relative;
+            bottom: 6px;
+            left: 99px;
+            transform: rotate(45deg);
+        }
+        @keyframes tutor
+        {
+            30%, 70%
+            {
+                opacity: 1;
+            }
+            100%
+            {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Prim's Algorithm</h1>
+        <div class="content">
+            <div class="area">
+                <label class="head">
+                    Enter graph here <div class="circle-alp">i</div> :
+                    <div class="tutorial">see instructions</div>
+                    <ul class="instructions">
+                        <li>Tap any where to add Node</li>
+                        <li>Tap on a node to select/deselect the node</li>
+                        <li>Tap a node while another is selected to add Edge between then</li>
+                        <li>Enter weight in the prompt which will appear while creating the Edge</li>
+                    </ul>
+                </label>
+                <div class="graph-borad" id="board">
+                </div>
+                <svg id="draw"></svg>
+            </div>
+            <div class="buttons">
+                <button class="button" onclick="clear_board()">Clear Board</button>
+                <span class="note" id="note"><span style="color: rgb(255, 20, 20); font-weight: bolder;">Note : </span> &nbsp;Can't contain isolated node/nodes</span>
+                <button class="button" onclick="slove()">Solve</button>
+            </div>
+            <div class="area">
+                <label class="head">Solution Graph:</label>
+                <div class="graph-borad" id="slove-board"></div>
+                <svg id="slove-draw"></svg>
+            </div>
+        </div>
+    </div>
+    <script>
+        let board = document.getElementById("board");
+        let draw = document.getElementById("draw");
+        let sloveboard = document.getElementById("slove-board");
+        let slovedraw = document.getElementById("slove-draw");
+        let node = [];
+        let select = -1;
+        // let adjmatrix = new Array((20)).fill(new Array((20)).fill(0));
+        // console.table(adjmatrix);
+        let adjmatrix = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]];
+        board.addEventListener('click', e =>{
+            if(board !== e.target)
+            {
+                if(e.target.classList == 'text')
+                return ;
+                if(select === -1)
+                {
+                    select = e.target.innerHTML - 1;
+                    console.log(select);
+                    e.target.classList.add("focused");
+                }
+                else if(e.target.innerHTML - 1 == select)
+                {
+                    e.target.classList.remove("focused");
+                    select = -1;
+                    return;
+                }
+                else
+                {
+                    let weight = prompt("enter weight of edge(>0)");
+                    if(weight !== null && weight>0)
+                    {
+                        weight = Number(weight);
+                        let line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                        let text = document.createElement("span");
+                        text.classList.add("text");
+                        let x1=Number(node[select].style.left.replace("%", ""));
+                        let x2=Number(e.target.style.left.replace("%", ""));
+                        let y1=Number(node[select].style.top.replace("%", ""));
+                        let y2=Number(e.target.style.top.replace("%", ""));
+                        adjmatrix[select][e.target.innerHTML-1] = adjmatrix[e.target.innerHTML-1][select] = weight;
+                        line.setAttribute("y1", y1 + "%");
+                        line.setAttribute("x1", x1 + "%");
+                        line.setAttribute("y2", y2 + "%");
+                        line.setAttribute("x2", x2 + "%");
+                        line.classList.add("line");
+                        text.classList.add("text");
+                        text.style.left =  (x1+x2)/2 + "%";
+                        text.style.top =  (y1+y2)/2 + "%";
+                        text.innerHTML = weight;
+                        let cline = line.cloneNode(true);
+                        let ctext = text.cloneNode(true);
+                        let id = Math.max(node[select].innerHTML-1,e.target.innerHTML-1)+""+Math.min(node[select].innerHTML-1,e.target.innerHTML-1);
+                        cline.setAttribute("id", "l" + id);
+                        ctext.setAttribute("id", "t" + id);
+                        text.setAttribute("id", "i" + id);
+                        cline.style.display = "none";
+                        ctext.style.display = "none";
+                        draw.appendChild(line);
+                        board.appendChild(text);
+                        slovedraw.appendChild(cline);
+                        sloveboard.appendChild(ctext);
+                    }
+                    node[select].classList.remove("focused");
+                    select = -1;
+                }
+                return;
+            }
+            else if(node.length >= 20) return;
+            else if(select !== -1)
+            {
+                node[select].classList.remove("focused");
+                select = -1;
+                return;
+            }
+            let x = e.offsetX;
+            let y = e.offsetY;
+            let xb = board.offsetWidth;
+            let yb = board.offsetHeight;
+            console.log(x + " " + y + "\n" + xb + " " + yb);
+            let n = document.createElement("div");
+            n.innerHTML = node.length + 1;
+            n.classList = 'node';
+            n.style.left = Math.round((x/xb)*100) + "%";
+            n.style.top = Math.round((y/yb)*100) + "%";
+            node.push(n);
+            let tn = n.cloneNode(true);
+            tn.setAttribute("id", node.length-1);
+            tn.style.display = "none";
+            board.appendChild(n);
+            sloveboard.appendChild(tn);
+        });
+        function prims(adjmatrix, n)
+        {
+            let d = {};
+            let i, c = 0;
+            let rem = [];
+            for(i=1; i<n; i++)
+            {
+                rem.push(i);
+                d[i] = [-1, -1];
+            }
+            console.table(rem);
+            console.table(d);
+            let visited = [[0, -1, -1]];
+            i = 0;
+            function main()
+            {
+                console.log("i -- " + i);
+                rem.forEach(v=>
+                {
+                    if(adjmatrix[i][v]>0 && (d[v][1] === -1 || (d[v][1] != -1 && d[v][1] > adjmatrix[i][v])))
+                    {
+                        d[v][0] = i;
+                        d[v][1] = adjmatrix[i][v];
+                    }
+                })
+                console.table(d);
+                let m = rem[0], mind = 0;
+                rem.forEach((v,ind)=>
+                {
+                    console.log(v);
+                    if(d[v][1] !== -1)
+                    {
+                        let id = Math.max(d[v][0], v)+""+Math.min(d[v][0], v);
+                        console.log("id ---------" + id);
+                        let curEdge = document.getElementById("i"+id);
+                        curEdge.style.backgroundColor = "yellow";
+                        curEdge.style.backgroundColor = "transparent";
+                        if(d[m][1] > d[v][1] || d[m][1] === -1)
+                        {
+                            m = v;
+                            mind = ind;
+                        }
+                    }
+                })
+                i = m;
+                console.log(d[m][0] + " " + m);
+                document.getElementById(d[m][0]).style.display = "flex";
+                setTimeout(()=>{
+                    document.getElementById(m).style.display = "flex";
+                    let id = Math.max(d[m][0], m)+""+Math.min(d[m][0], m);
+                    console.log(d[m][0] + "" + m + "" + id);
+                    document.getElementById("l" + id).style.display = "flex";
+                    document.getElementById("t" + id).style.display = "flex";
+                    visited.push([m, d[m][0], d[m][1]]);
+                    rem.splice(mind, 1)
+                    console.log("rem" + rem);
+                    if(c++<n-2)
+                    {
+                        setTimeout(()=>{
+                            main();
+                        },500);
+                    }
+                }, 500)
+            }
+            main();
+            return visited;
+        }
+        function slove()
+        {
+            let note = document.getElementById("note");
+            note.style.display = "none";
+            let ecount = 0;
+            for(i = 0; i<node.length; i++)
+            {
+                let sum = 0;
+                for(j=0; j<node.length; j++)
+                {
+                    sum += adjmatrix[i][j];
+                    if(adjmatrix[i][j] != 0)
+                    ecount++;
+                }
+                if(sum == 0)
+                {
+                    note.style.display = "flex";
+                    note.innerHTML = `<span style="color: rgb(255, 20, 20); font-weight: bolder;">Note : </span> &nbsp;Can't contain isolated node/nodes`;
+                    return;
+                }
+            }
+            if(ecount<=node.length)
+            {
+                note.style.display = "flex";
+                note.innerHTML = `<span style="color: rgb(255, 20, 20); font-weight: bolder;">Note : </span> &nbsp;can't contain multiple graphs`;
+                return;
+            }
+            sloveboard.childNodes.forEach(childNode => childNode.style.display = "none");
+            slovedraw.childNodes.forEach((childNode) => {
+                childNode.style.display = "none";
+            })
+            console.log(prims(adjmatrix, node.length));
+        }
+        function clear_board()
+        {
+            console.log("clearing board...");
+            board.innerHTML = "";
+            sloveboard.innerHTML = "";
+            draw.innerHTML = "";
+            slovedraw.innerHTML = "";
+            node = [];
+            adjmatrix = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]];
+        }
+    </script>
+</body>
+</html>
